@@ -1,3 +1,5 @@
+Asteroids Recreation: Source Code
+
 HTML ==
 <!DOCTYPE html>
 <html>
@@ -274,6 +276,910 @@ function shootAsteroid(bullet, asteroid) {
   asteroid.kill();
   bullet.kill();
   game.camera.shake(0.02, 250);
+  
+  
+  Asteroids Remake: Source Code
   boomSound.play();
   maxSpeed = maxSpeed + 1;
+}
+
+
+Dodgeball Extreme: Source Code
+
+HTML ==
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="my-game"></div>
+    <p>Objective: Avoid The Softballs And Accumulate Points</p>
+    <br>
+    <p>Controls</p>
+    <p>Arrow Keys - Move</p>
+    <p>Z - Fire</p>
+    <p>X - Clear</p>
+    <p>Shift - Focus</p>
+    <br>
+    <p>Coded by HLF</p>
+    <script src="phaser.min.js"></script>
+    <script src="code.js"></script>
+</body>
+</html>
+
+CSS ==
+body {
+    background: #dddddd;
+    text-align: center;
+}
+
+#my-game {
+    /* optional */
+    width: 600px;
+    height: 750px;
+    margin: 0 auto;
+    border: 1px solid black;
+}
+
+JavaScript ==
+// create Phaser.Game object named "game"
+var game = new Phaser.Game(600, 750, Phaser.AUTO, 'my-game',
+    { preload: preload, create: create, update: update });
+
+// declare global variables for game
+    //variables
+    var Score = 0;
+    var Lives = 3;
+    var Clears = 3;
+    var Graze = 0;
+    var StageNumber = 1;
+    var Focus = false;
+    var FinalScore = 0
+    
+    var F = false;
+    var FF = false;
+    var FS  = false;
+    var SS = false;
+    var SC = false
+    var KO = false
+    
+    var Target;
+    var ClearProtection = false;
+    var AllySpawn;
+    
+    //ui
+    var SideBar;
+    var StageText;
+    var ScoreText;
+    var LivesText;
+    var ClearsText;
+    var GrazeText;
+    
+    var LossText;
+    var YourScoreText;
+    
+    var TargetText;
+    
+    //controls
+    var ArrowKey;
+    var ZKey;
+    var XKey;
+    var ShiftKey;
+    
+    //groups
+    var Friend;
+    var Foe;
+    var FriendB;
+    var FoeB;
+    
+    //entities
+    var PlayerHitbox;
+    var Player;
+    var Enemy1;
+    var Enemy2;
+    var Boss1;
+    var Ally1;
+    var Ally2;
+    var Ally3;
+    var Ally4;
+    
+    //bullets
+    var Enemy1BGroup;
+    var Enemy1Bullet;
+    var Boss1BGroup;
+    var Boss1Bullet;
+    var AllyBGroup;
+    var AllyBullet;
+    var FocusBGroup;
+    var FocusBullet;
+    
+    //effects
+    
+    
+    //sounds
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+// preload game assets - runs once at start of game
+function preload() {
+    
+    //ui
+    game.load.spritesheet('BackgroundSpriteSheet', 'assets/images/GB3.png', 600, 750);
+    game.load.spritesheet('FreezeSpriteSheet', 'assets/images/freeze.png', 600, 750);
+    game.load.spritesheet('LossSpriteSheet', 'assets/images/loss.png', 600, 750);
+    
+    //entities
+    game.load.spritesheet('PlayerHitboxSpriteSheet', 'assets/images/PlayerHitbox.png', 8, 8);
+    game.load.spritesheet('PlayerSpriteSheet', 'assets/images/FR1.png', 200, 300);
+    
+    game.load.spritesheet('Ally1SpriteSheet', 'assets/images/FR2.png', 200, 300);
+    game.load.spritesheet('Ally2SpriteSheet', 'assets/images/FR3.png', 200, 300);
+    game.load.spritesheet('Ally3SpriteSheet', 'assets/images/FR4.png', 200, 300);
+    game.load.spritesheet('Ally4SpriteSheet', 'assets/images/FR5.png', 200, 300);
+    
+    game.load.spritesheet('Enemy1SpriteSheet', 'assets/images/FO1.png', 200, 300);
+    game.load.spritesheet('Enemy2SpriteSheet', 'assets/images/FO2.png', 200, 300);
+    game.load.spritesheet('Boss1SpriteSheet', 'assets/images/FO3.png', 200, 300);
+    
+    //bullets
+    game.load.spritesheet('Bullet1SpriteSheet', 'assets/images/baseballR.png', 32, 32);
+    
+    //effects
+    
+    
+    //sounds
+    
+}
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+// create game world - runs once after "preload" finished
+function create() {
+    
+    //ui
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    
+    GameBackground = game.add.sprite(0 , 0, 'BackgroundSpriteSheet');
+        StageText = game.add.text(game.world.centerX + 202, game.world.centerY - 50,
+        'Stage ' + StageNumber,
+        { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+        ScoreText = game.add.text(game.world.centerX + 185, game.world.centerY - 32,
+        'Score: ' + Score,
+        { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+        LivesText = game.add.text(game.world.centerX + 185, game.world.centerY + 8,
+        'Lives: ' + Lives,
+        { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+        ClearsText = game.add.text(game.world.centerX + 185, game.world.centerY + 29,
+        'Clears: ' + Clears,
+        { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+        GrazeText = game.add.text(game.world.centerX + 185, game.world.centerY - 12,
+        'Graze: ' + Graze,
+        { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+        
+        //TargetText = game.add.text(game.world.centerX + 105, game.world.centerY - 120,
+        //'Target: ' + Target,
+        //{ font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+        
+    Freeze = game.add.sprite(0 , 0, 'FreezeSpriteSheet');
+        Freeze.alpha = 0.5
+        Freeze.visible = false
+        game.world.bringToTop(Freeze)
+        
+    Loss = game.add.sprite(0 , 0, 'LossSpriteSheet');
+        Loss.alpha = 0.6
+        Loss.visible = false
+        game.world.bringToTop(Loss)
+        
+    //controls
+    ArrowKey = game.input.keyboard.createCursorKeys();
+    ZKey = game.input.keyboard.addKey(Phaser.KeyCode.Z);
+    XKey = game.input.keyboard.addKey(Phaser.KeyCode.X);
+    ShiftKey = game.input.keyboard.addKey(Phaser.KeyCode.SHIFT);
+    
+    //entities
+    Player = game.add.sprite(game.world.centerX - 68 , 600, 'PlayerSpriteSheet');
+        Player.anchor.set(0.5, 0.5);
+        //Player = Friend;
+        Player.scale.x = 1/6.25;
+        Player.scale.y = 1/6.25;
+    PlayerHitbox = game.add.sprite(game.world.centerX - 68 , 600, 'PlayerHitboxSpriteSheet');
+        PlayerHitbox.anchor.set(0.5, 0.5);
+        PlayerHitbox.alpha = 1;
+        //PlayerHitbox = Friend
+    game.physics.arcade.enable(Player);
+        Player.body.maxVelocity.set(400);
+        Player.body.drag.set(2000);
+        Player.enableBody = true;
+    game.physics.arcade.enable(PlayerHitbox);
+        PlayerHitbox.body.maxVelocity.set(400);
+        PlayerHitbox.body.drag.set(2000);
+        PlayerHitbox.enableBody = true;
+        
+    Ally1 = game.add.sprite(game.world.centerX - 168 , 720, 'Ally1SpriteSheet');
+        Ally1.anchor.set(0.5, 0.5);
+        game.physics.arcade.enable(Ally1);
+        Ally1.enableBody = true;
+        Ally1.body.drag.set(2000);
+        Ally1.body.maxVelocity.set(400);
+        //Ally1 = Friend
+        Ally1.scale.x = 1/6.25;
+        Ally1.scale.y = 1/6.25;
+    Ally2 = game.add.sprite(game.world.centerX + 32 , 720, 'Ally2SpriteSheet');
+        Ally2.anchor.set(0.5, 0.5);
+        game.physics.arcade.enable(Ally2);
+        Ally2.enableBody = true;
+        Ally2.body.drag.set(2000);
+        Ally2.body.maxVelocity.set(400);
+        //Ally2 = Friend
+        Ally2.scale.x = 1/6.25;
+        Ally2.scale.y = 1/6.25;
+    Ally3 = game.add.sprite(game.world.centerX - 236 , 700, 'Ally3SpriteSheet');
+        Ally3.anchor.set(0.5, 0.5);
+        game.physics.arcade.enable(Ally3);
+        Ally3.enableBody = true;
+        Ally3.body.drag.set(2000);
+        Ally3.body.maxVelocity.set(400);
+        //Ally3 = Friend
+        Ally3.scale.x = 1/6.25;
+        Ally3.scale.y = 1/6.25;
+    Ally4 = game.add.sprite(game.world.centerX + 100 , 700, 'Ally4SpriteSheet');
+        Ally4.anchor.set(0.5, 0.5);
+        game.physics.arcade.enable(Ally4);
+        Ally4.enableBody = true;
+        Ally4.body.drag.set(2000);
+        Ally4.body.maxVelocity.set(400);
+        //Ally4 = Friend
+        Ally4.scale.x = 1/6.25;
+        Ally4.scale.y = 1/6.25;
+        
+    Enemy1 = game.add.sprite(game.world.centerX - 168 , 80, 'Enemy1SpriteSheet');
+        Enemy1.anchor.set(0.5, 0.5);
+        Enemy1.alpha = 0;
+        Enemy1.scale.x = 1/6.25;
+        Enemy1.scale.y = 1/6.25;
+        game.physics.arcade.enable(Enemy1);
+    Enemy2 = game.add.sprite(game.world.centerX + 32 , 80, 'Enemy2SpriteSheet');
+        Enemy2.anchor.set(0.5, 0.5);
+        Enemy2.alpha = 0;
+        //Enemy2 = Foe
+        Enemy2.scale.x = 1/6.25;
+        Enemy2.scale.y = 1/6.25;
+        game.physics.arcade.enable(Enemy2);
+    Boss1 = game.add.sprite(game.world.centerX - 68, 80, 'Boss1SpriteSheet');
+        Boss1.anchor.set(0.5, 0.5);
+        Boss1.alpha = 0;
+        //Boss1 = Foe
+        Boss1.scale.x = 1/6.25;
+        Boss1.scale.y = 1/6.25;
+        game.physics.arcade.enable(Boss1);
+    
+    Enemy1BGroup = game.add.group();
+        //Enemy1BGroup.add(FoeB)
+        Enemy1BGroup.enableBody = true;
+        Enemy1BGroup.checkWorldBounds = true
+        Enemy1BGroup.outOfBoundsKill = true
+    Boss1BGroup = game.add.group();
+        //Boss1BGroup.add(Foe)
+        Boss1BGroup.enableBody = true;
+        Boss1BGroup.checkWorldBounds = true
+        Boss1BGroup.outOfBoundsKill = true
+    FocusBGroup = game.add.group();
+        FocusBGroup.enableBody = true;
+        FocusBGroup.checkWorldBounds = true
+        FocusBGroup.outOfBoundsKill = true
+        //FocusBGroup.add(FriendB)
+    AllyBGroup = game.add.group();
+       //AllyBGroup.add(FriendB)
+        AllyBGroup.enableBody = true;
+        AllyBGroup.checkWorldBounds = true
+        AllyBGroup.outOfBoundsKill = true 
+    
+    
+    //Events
+    ScoreUp ()
+    setTimeout(FirstSpawn, 5000);
+    setTimeout(SecondSpawn, 7000);
+    setTimeout(ThirdSpawn, 12000);
+        
+    //bullets
+    
+    
+    //effects
+    
+    
+    //sounds
+
+}
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+// update gameplay - runs in continuous loop after "create" finished
+function update() {
+    
+    //collisions
+    game.physics.arcade.overlap(PlayerHitbox, Enemy1BGroup, HitboxHit, null, this);
+    game.physics.arcade.overlap(Player, Enemy1BGroup, PlayerGrazed, null, this);
+    
+    game.physics.arcade.overlap(PlayerHitbox, Boss1BGroup, HitboxHit, null, this);
+    game.physics.arcade.overlap(Player, Boss1BGroup, PlayerGrazed, null, this);
+    
+    game.physics.arcade.overlap(Enemy1, AllyBGroup, EnemyHit1, null, this);
+    game.physics.arcade.overlap(Enemy2, AllyBGroup, EnemyHit2, null, this);
+    game.physics.arcade.overlap(Boss1, AllyBGroup, EnemyHit3, null, this);
+    
+    game.physics.arcade.overlap(Enemy1, FocusBGroup, EnemyHit4, null, this);
+    game.physics.arcade.overlap(Enemy2, FocusBGroup, EnemyHit5, null, this);
+    game.physics.arcade.overlap(Boss1, FocusBGroup, EnemyHit6, null, this);
+    
+    //keep hitbox centered
+    PlayerHitbox.x = Player.x;
+    PlayerHitbox.y = Player.y;
+    
+    // keep player onscreen (instead of collideWorldBounds)
+    if (Player.left <= 84) Player.left = 84;
+    if (Player.top <= 100) Player.top = 100;
+    if (Player.right >= 380) Player.right = 380;
+    if (Player.bottom >= 650) Player.bottom = 650;
+    if (PlayerHitbox.left <= 84) PlayerHitbox.left = 84;
+    if (PlayerHitbox.right >= 380) PlayerHitbox.right = 380;
+    if (PlayerHitbox.top <= 100) PlayerHitbox.top = 100;
+    if (PlayerHitbox.bottom >= 650) PlayerHitbox.bottom = 650;
+    
+    if (Ally1.left <= 16) Ally1.left = 16;
+    if (Ally1.top <= 16) Ally1.top = 16;
+    if (Ally1.right >= 448) Ally1.right = 448;
+    if (Ally1.bottom >= 734) Ally1.bottom = 734;
+    if (Ally2.left <= 16) Ally2.left = 16;
+    if (Ally2.top <= 16) Ally2.top = 16;
+    if (Ally2.right >= 448) Ally2.right = 448;
+    if (Ally2.bottom >= 734) Ally2.bottom = 734;
+    if (Ally3.left <= 16) Ally3.left = 16;
+    if (Ally3.top <= 16) Ally3.top = 16;
+    if (Ally3.right >= 448) Ally3.right = 448;
+    if (Ally3.bottom >= 734) Ally3.bottom = 734;
+    if (Ally4.left <= 16) Ally4.left = 16;
+    if (Ally4.top <= 16) Ally4.top = 16;
+    if (Ally4.right >= 448) Ally4.right = 448;
+    if (Ally4.bottom >= 734) Ally4.bottom = 734;
+    
+    //Controls
+    if (XKey.justDown) {
+        ClearF()
+    }
+    
+    if (ShiftKey.isDown) {
+        //focus
+        Player.body.maxVelocity.set(100);
+        PlayerHitbox.body.maxVelocity.set(100);
+        PlayerHitbox.alpha = 1;
+        //if (Focus)FocusFire();
+        //Focus = true
+    }
+        else if (ShiftKey.isUp) {
+            //unfocus
+            Player.body.maxVelocity.set(400);
+            PlayerHitbox.body.maxVelocity.set(400);
+            PlayerHitbox.alpha = 0;
+           // Focus = false
+        }
+    if (ArrowKey.up.isDown) {
+        // accelerate player forward
+        Player.body.velocity.y = -300;
+        PlayerHitbox.body.velocity.y = -300;
+        Ally1.body.velocity.y = -100;
+        Ally2.body.velocity.y = -100;
+        Ally3.body.velocity.y = -100;
+        Ally4.body.velocity.y = -100;
+    }
+    if (ArrowKey.down.isDown) {
+        // accelerate player backward
+        Player.body.velocity.y = 300;
+        PlayerHitbox.body.velocity.y = 300;
+        Ally1.body.velocity.y = 100;
+        Ally2.body.velocity.y = 100;
+        Ally3.body.velocity.y = 100;
+        Ally4.body.velocity.y = 100;
+    }
+    if (ArrowKey.left.isDown) {
+        // accelerate player left
+        Player.body.velocity.x = -300;
+        PlayerHitbox.body.velocity.x = -300;
+        Ally1.body.velocity.x = - 100;
+        Ally2.body.velocity.x = - 100;
+        Ally3.body.velocity.x = - 100;
+        Ally4.body.velocity.x = - 100;
+    }
+    if (ArrowKey.right.isDown) {
+        // accelerate player right
+        Player.body.velocity.x = 300;
+        PlayerHitbox.body.velocity.x = 300;
+        Ally1.body.velocity.x = 100;
+        Ally2.body.velocity.x = 100;
+        Ally3.body.velocity.x = 100;
+        Ally4.body.velocity.x = 100;
+    }
+    if (ZKey.isDown) {
+        //fire
+       // if (Focus) FocusFire();
+        if (ZOff)Fire();
+        ZOff = false;
+    }
+        else if (ZKey.isUp) {
+            ZOff = true;
+        }
+        
+    //if (game.physics.arcade.distanceBetween(Player, Enemy1) < game.physics.arcade.distanceBetween(Player, Enemy2) && game.physics.arcade.distanceBetween(Player, Enemy1) < game.physics.arcade.distanceBetween(Player, Boss1)) Target = Enemy1;
+    //if (game.physics.arcade.distanceBetween(Player, Enemy2) < game.physics.arcade.distanceBetween(Player, Enemy1) && game.physics.arcade.distanceBetween(Player, Enemy2) < game.physics.arcade.distanceBetween(Player, Boss1)) Target = Enemy2;
+    //if (game.physics.arcade.distanceBetween(Player, Boss1) < game.physics.arcade.distanceBetween(Player, Enemy1) && game.physics.arcade.distanceBetween(Player, Boss1) < game.physics.arcade.distanceBetween(Player, Enemy2)) Target = Boss1;
+                
+         //TargetText.text = 'Target: ' + Target
+        
+    if (Lives < 0 && KO == false) Knockout()
+}
+
+
+    
+
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+//Events
+function FirstSpawn () {
+    
+        game.add.tween(Enemy1).to({ alpha: 1 }, 500, 'Linear', true, 0);
+        //Enemy1 = Foe;
+        // Start After 3 seconds
+    setTimeout(function() { 
+        
+        
+        
+        //spawn 10 bullets
+        var i = 0;
+        function Loop1 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var Enemy1Bullet = Enemy1BGroup.create(Enemy1.x, Enemy1.y + 30, 'Bullet1SpriteSheet');
+                    Enemy1Bullet.scale.x = 8/32;
+                    Enemy1Bullet.scale.y = 8/32;
+                    Enemy1Bullet.anchor.set(0.5, 0.5);
+                    Enemy1.enableBody = true;
+                Enemy1Bullet.body.velocity.y = 500;
+                setTimeout(function(){
+                    Enemy1Bullet.destroy()
+                }, 3000)
+                FS = true
+                i++;
+                if (i < 30) { //10 loops
+                    Loop1();
+                }
+            }, 250);//1s between loops
+        }
+
+        Loop1(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 250); //2 seconds between loops
+    
+    
+        game.add.tween(Enemy2).to({ alpha: 1 }, 500, 'Linear', true, 0);
+        // Start After 3 seconds
+    setTimeout(function() { 
+        //spawn 10 bullets
+        var i = 0;
+        function Loop1 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var Enemy1Bullet = Enemy1BGroup.create(Enemy2.x, Enemy2.y + 30, 'Bullet1SpriteSheet');
+                    Enemy1Bullet.scale.x = 8/32;
+                    Enemy1Bullet.scale.y = 8/32;
+                    Enemy1Bullet.anchor.set(0.5, 0.5);
+                    Enemy2.enableBody = true;
+                Enemy1Bullet.body.velocity.y = 500;
+                setTimeout(function(){
+                    Enemy1Bullet.destroy()
+                }, 3000)
+                
+                i++;
+                if (i < 30) { //10 loops
+                    Loop1();
+                }
+            }, 250);//1s between loops
+        }
+
+        Loop1(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 250); //2 seconds between loops
+}
+
+function SecondSpawn () {
+    
+        game.add.tween(Boss1).to({ alpha: 1 }, 500, 'Linear', true, 0);
+    setTimeout(function() { 
+        
+        //spawn 3 bullets
+        var i = 0;
+        function Loop2 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var Boss1Bullet = Boss1BGroup.create(Boss1.x, Boss1.y + 30, 'Bullet1SpriteSheet');
+                    Boss1Bullet.scale.x = 8/32;
+                    Boss1Bullet.scale.y = 8/32;
+                    Boss1Bullet.anchor.set(0.5, 0.5);
+                game.physics.arcade.moveToObject(Boss1Bullet, PlayerHitbox, 400);
+                setTimeout(function(){
+                    Boss1Bullet.destroy()
+                }, 3000)
+                SS = true
+                i++;
+                if (i < 30) { //10 loops
+                    Loop2();
+                }
+            }, 500);//0.5s between loops
+        }
+
+        Loop2(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 500); //0.5 seconds between loops
+}
+
+function ThirdSpawn () {
+    setTimeout(function() {
+        var i = 0;
+        function Loop4 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var Enemy1Bullet = Enemy1BGroup.create(Enemy1.x, Enemy1.y + 30, 'Bullet1SpriteSheet');
+                    Enemy1Bullet.scale.x = 8/32;
+                    Enemy1Bullet.scale.y = 8/32;
+                    Enemy1Bullet.anchor.set(0.5, 0.5);
+                    Enemy1Bullet.enableBody = true;
+                    game.physics.enable(Enemy1Bullet, Phaser.Physics.ARCADE);
+                    game.physics.arcade.moveToObject(Enemy1Bullet, PlayerHitbox, 400);
+                    setTimeout(function(){
+                    Enemy1Bullet.destroy()
+                }, 3000)
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop4();
+                }
+            }, 250);//1s between loops
+        }
+
+        Loop4(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 250); //2 seconds between loops
+    
+    setTimeout(function() {
+        var i = 0;
+        function Loop5 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var Enemy1Bullet = Enemy1BGroup.create(Enemy2.x, Enemy2.y + 30, 'Bullet1SpriteSheet');
+                    Enemy1Bullet.scale.x = 8/32;
+                    Enemy1Bullet.scale.y = 8/32;
+                    Enemy1Bullet.anchor.set(0.5, 0.5);
+                    Enemy1Bullet.enableBody = true;
+                    game.physics.enable(Enemy1Bullet, Phaser.Physics.ARCADE);
+                    game.physics.arcade.moveToObject(Enemy1Bullet, PlayerHitbox, 400);
+                    setTimeout(function(){
+                    Enemy1Bullet.destroy()
+                }, 3000)
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop5();
+                }
+            }, 250);//1s between loops
+        }
+
+        Loop5(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 250); //2 seconds between loops
+    
+    setTimeout(function() { 
+        
+        //spawn 3 bullets
+        var i = 0;
+        function Loop6 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var Boss1Bullet = Boss1BGroup.create(Boss1.x, Boss1.y + 30, 'Bullet1SpriteSheet');
+                    Boss1Bullet.scale.x = 8/32;
+                    Boss1Bullet.scale.y = 8/32;
+                    Boss1Bullet.anchor.set(0.5, 0.5);
+                Boss1Bullet.body.velocity.y = 500;
+                setTimeout(function(){
+                    Enemy1Bullet.destroy()
+                }, 3000)
+                SS = true
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop6();
+                }
+            }, 500);//0.5s between loops
+        }
+
+        Loop6(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0.5 seconds between loops
+}
+
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------
+
+// add custom functions (for collisions, etc.)
+
+function TargetFinder () {
+    setTimeout(function() { 
+        //check every 0.25s
+        var i = 0;
+        function LoopT () {
+            setTimeout(function () {
+                if (game.physics.arcade.distanceBetween(Player, Enemy1) < game.physics.arcade.distanceBetween(Player, Enemy2) && game.physics.arcade.distanceBetween(Player, Enemy1) < game.physics.arcade.distanceBetween(Player, Boss1)) Target = Enemy1;
+                if (game.physics.arcade.distanceBetween(Player, Enemy2) < game.physics.arcade.distanceBetween(Player, Enemy1) && game.physics.arcade.distanceBetween(Player, Enemy2) < game.physics.arcade.distanceBetween(Player, Boss1)) Target = Enemy2;
+                if (game.physics.arcade.distanceBetween(Player, Boss1) < game.physics.arcade.distanceBetween(Player, Enemy1) && game.physics.arcade.distanceBetween(Player, Boss1) < game.physics.arcade.distanceBetween(Player, Enemy2)) Target = Boss1;
+                
+                TargetText.text = 'Target: ' + Target
+                
+                i++;
+                if (i < 10) { //10 loops
+                    LoopT();
+                }
+            }, 250);//0.25s between loops
+        }
+
+        LoopT(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0 seconds between loops
+}
+
+//function FocusFire () {
+     
+   // setTimeout(function() {
+    //fire bullets
+        //var i = 0;
+        //function Loop0 () {
+          //  setTimeout(function () {
+            //    // create individual bullet in group
+              //  var FocusBullet = FocusBGroup.create(Player.x, Player.y - 30, //'Bullet1SpriteSheet');
+                  //  FocusBullet.scale.x = 8/32;
+                //    FocusBullet.scale.y = 8/32;
+                  //  FocusBullet.anchor.set(0.5, 0.5);
+                    //FocusBullet.alpha = 0.5
+            //    FocusBullet.body.velocity.y = -300;
+              //  //game.physics.arcade.moveToObject(FocusBullet, Target, 400);
+            //    setTimeout(function(){
+              //      FocusBullet.destroy()
+            //    }, 3000)
+                
+              //  if (Focus === false) return;
+            //    if (ZOff === true) return;
+              //  FF = true
+               // i++;
+               // if (i < 10000) { //10 loops
+                //    Loop0();
+            //    }
+//            }, 500);//0.250s between loops
+  //      }
+
+    //    Loop0(); //calls bullet spawn after 1s (make differnt for each loop)
+//    }, 0); //0 seconds between loops
+//}
+
+function Fire () {
+    
+    setTimeout(function() {
+    //fire bullets
+        var i = 0;
+        function Loop0 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var AllyBullet = AllyBGroup.create(Ally1.x, Ally1.y - 30, 'Bullet1SpriteSheet');
+                    AllyBullet.scale.x = 8/32;
+                    AllyBullet.scale.y = 8/32;
+                    AllyBullet.anchor.set(0.5, 0.5);
+                    AllyBullet.alpha = 0.3
+                AllyBullet.body.velocity.y = -300;
+                setTimeout(function(){
+                    AllyBullet.destroy()
+                }, 3000)
+                if (Focus === true) return;
+                if (ZOff === true) return;
+                F = true
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop0();
+                }
+            }, 250);//0.250s between loops
+        }
+
+        Loop0(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0 seconds between loops
+    
+    setTimeout(function() {
+    //fire bullets
+        var i = 0;
+        function Loop0 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var AllyBullet = AllyBGroup.create(Ally2.x, Ally2.y - 30, 'Bullet1SpriteSheet');
+                    AllyBullet.scale.x = 8/32;
+                    AllyBullet.scale.y = 8/32;
+                    AllyBullet.anchor.set(0.5, 0.5);
+                    AllyBullet.alpha = 0.3
+                AllyBullet.body.velocity.y = -300;
+                setTimeout(function(){
+                    AllyBullet.destroy()
+                }, 3000)
+                if (Focus === true) return;
+                if (ZOff === true) return;
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop0();
+                }
+            }, 250);//0.250s between loops
+        }
+
+        Loop0(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0 seconds between loops
+    
+    setTimeout(function() {
+    //fire bullets
+        var i = 0;
+        function Loop0 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var AllyBullet = AllyBGroup.create(Ally3.x, Ally3.y - 30, 'Bullet1SpriteSheet');
+                    AllyBullet.scale.x = 8/32;
+                    AllyBullet.scale.y = 8/32;
+                    AllyBullet.anchor.set(0.5, 0.5);
+                    AllyBullet.alpha = 0.3
+                AllyBullet.body.velocity.y = -300;
+                setTimeout(function(){
+                    AllyBullet.destroy()
+                }, 3000)
+                if (Focus === true) return;
+                if (ZOff === true) return;
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop0();
+                }
+            }, 250);//0.250s between loops
+        }
+
+        Loop0(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0 seconds between loops
+    
+    setTimeout(function() {
+    //fire bullets
+        var i = 0;
+        function Loop0 () {
+            setTimeout(function () {
+                // create individual bullet in group
+                var AllyBullet = AllyBGroup.create(Ally4.x, Ally4.y - 30, 'Bullet1SpriteSheet');
+                    AllyBullet.scale.x = 8/32;
+                    AllyBullet.scale.y = 8/32;
+                    AllyBullet.anchor.set(0.5, 0.5);
+                    AllyBullet.alpha = 0.3
+                AllyBullet.body.velocity.y = -300;
+                setTimeout(function(){
+                    AllyBullet.destroy()
+                }, 3000)
+                if (Focus === true) return;
+                if (ZOff === true) return;
+                i++;
+                if (i < 10000) { //10 loops
+                    Loop0();
+                }
+            }, 250);//0.250s between loops
+        }
+
+        Loop0(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0 seconds between loops
+}
+
+function ClearF () {
+    if (Clears > 0) {
+        Clears = Clears - 1
+        ClearsText.text = 'Clears: ' + Clears
+        if (game.physics.arcade.distanceBetween(Player, Enemy1BGroup) < 300) {
+            Enemy1BGroup.destroy()
+            console.log('EX')
+        };
+        if (game.physics.arcade.distanceBetween(Player, Boss1BGroup) < 300) {
+            Boss1BGroup.destroy()
+        };
+        ClearProtection = true;
+        Freeze.visible = true
+        setTimeout(function() {
+            ClearProtection = false;
+            Freeze.visible = false
+        }, 3000);
+        console.log('X')
+    }
+}
+
+function HitboxHit (PlayerHitbox, Enemy1Bullet) {
+    if(ClearProtection == false) {
+    Enemy1Bullet.destroy();
+    Lives = Lives - 1;
+    LivesText.text = 'Lives: ' + Lives
+    console.log('Kill')
+    }
+}
+function PlayerGrazed (Player, Enemy1Bullet) {
+    Graze = Graze + 1;
+    GrazeText.text = 'Graze: ' + Graze
+}
+
+function Knockout () {
+    console.log('ko')
+    Player.kill()
+    PlayerHitbox.kill()
+    Loss.visible = true
+    game.world.bringToTop(Loss)
+    SC = true
+    if (SC == true) {FinalScore = Score * Graze}
+    LossText = game.add.text(game.world.centerX - 170, game.world.centerY - 60,
+        'Knockout!',
+        { font: 'Arial', fontSize: '50px', fontStyle: 'bold', fill: '#000000' });
+    YourScoreText = game.add.text(game.world.centerX - 130, game.world.centerY + 20,
+        'Your Score: ' + FinalScore,
+        { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#000000' });
+    SC = false
+    KO = true
+}
+
+function EnemyHit1 (Enemy1, AllyBullet) {
+    console.log('E1A')
+    Score = Score + 1;
+    ScoreText.text = 'Score: ' + Score
+}
+function EnemyHit2 (Enemy2, AllyBullet) {
+    console.log('E2A')
+    Score = Score + 1;
+    ScoreText.text = 'Score: ' + Score
+}
+function EnemyHit3 (Boss1, AllyBullet) {
+    console.log('B1A')
+    Score = Score + 1;
+    ScoreText.text = 'Score: ' + Score
+}
+
+function EnemyHit4 (Enemy1, FocusBullet) {
+    console.log('E1F')
+    Score = Score + 1;
+    ScoreText.text = 'Score: ' + Score
+}
+function EnemyHit5 (Enemy2, FocusBullet) {
+    console.log('E2F')
+    Score = Score + 1;
+    ScoreText.text = 'Score: ' + Score
+}
+function EnemyHit6 (Boss1, FocusBullet) {
+    console.log('B1F')
+    Score = Score + 1;
+    ScoreText.text = 'Score: ' + Score
+}
+
+function ScoreUp () {
+    setTimeout(function() {
+    //fire bullets
+        var i = 0;
+        function LoopS () {
+            setTimeout(function () {
+                    Score = Score + 100;
+                    ScoreText.text = 'Score: ' + Score
+                i++;
+                if (i < 10000) { //10 loops
+                    LoopS();
+                }
+            }, 5000);//5s between loops
+        }
+
+        LoopS(); //calls bullet spawn after 1s (make differnt for each loop)
+    }, 0); //0 seconds between loops
 }
