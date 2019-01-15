@@ -1,0 +1,279 @@
+HTML ==
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>My Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="my-game"></div>
+    <script src="phaser.min.js"></script>
+    <script src="code.js"></script>
+</body>
+</html>
+
+CSS ==
+#my-game {
+    /* optional */
+    width: 800px;
+    height: 600px;
+    margin: 0 auto;
+    border: 1px solid black;
+}       
+
+JavaScript ==
+// create Phaser.Game object named "game"
+var game = new Phaser.Game(800, 600, Phaser.AUTO, "my-game", {
+  preload: preload,
+  create: create,
+  update: update
+});
+
+// declare global variables for game
+var ship;
+var firekey;
+var arrowKey;
+var asteroidGroup;
+var maxSpeed = 100;
+var engineSound;
+var boomSound;
+var explosion;
+var laser;
+var fireSound;
+var asteroidParticles;
+var score = 0;
+var scoreText;
+var healthText;
+var healthBar;
+var livesText;
+// preload game assets - runs once at start
+
+function preload() {
+  game.load.spritesheet("spaceship", "assets/images/spaceship.png", 64, 64);
+  game.load.image("space", "assets/images/space-stars.jpg");
+  game.load.spritesheet("asteroid", "assets/images/asteroid.png", 40, 40);
+  game.load.image("particle", "assets/images/asteroid-particle.png");
+  game.load.spritesheet("laser", "assets/images/laser.png", 40, 40);
+  game.load.spritesheet("explosion", "assets/images/explosion.png", 128, 128);
+  game.load.audio("engine", "assets/sounds/engine.mp3");
+  game.load.audio("boom", "assets/sounds/boom.wav");
+  game.load.audio("fire", "assets/sounds/fire.wav");
+  game.load.image('health-red', "assets/images/health-red.png", 210, 20);
+  game.load.image('health-green', "assets/images/health-green.png", 210, 20);
+}
+
+// create game world - runs once after "preload" finished
+
+function create() {
+  game.physics.startSystem(Phaser.Physics.ARCADE);
+  space = game.add.tileSprite(0, 0, 800, 600, "space");
+
+  laser = game.add.weapon(10, "laser");
+  laser.bulletKillType = Phaser.Weapon.KILL_CAMERA_BOUNDS;
+  laser.bulletSpeed = 600;
+  laser.fireRate = 250;
+  // set bullet collision area to match its visual size
+  laser.setBulletBodyOffset(24, 12, 6, 6);
+
+  ship = game.add.sprite(game.world.centerX, game.world.centerY, "spaceship");
+  ship.animations.add("moving", [0, 1, 2], 10, true);
+  ship.anchor.set(0.5, 0.5);
+  game.physics.arcade.enable(ship);
+  ship.body.maxVelocity.set(400);
+  ship.body.drag.set(20);
+  ship.angle = -90;
+  ship.health = 100;
+  ship.maxHealth = 100;
+  ship.body.collideWorldBounds = true;
+
+
+  engineSound = game.add.audio("engine", 0.3);
+  engineSound.loop = true;
+  engineSound.play();
+
+  boomSound = game.add.audio("boom", 0.3);
+
+  fireSound = game.add.audio("fire", 0.3);
+  laser.onFire.add(function() {
+    fireSound.play();
+  });
+
+  asteroidGroup = game.add.group();
+  // add asteroids to group
+  for (var i = 0; i < 10; i++) {
+    // create individual asteroid in group
+    var asteroid = asteroidGroup.create(
+      game.world.randomX,
+      game.world.randomY,
+      "asteroid"
+    );
+    asteroid.animations.add(
+      "spin-clock",
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+      16,
+      true
+    );
+    asteroid.animations.add(
+      "spin-counter",
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].reverse(),
+      16,
+      true
+    );
+    asteroid.anchor.set(0.5, 0.5);
+    game.physics.arcade.enable(asteroid);
+    asteroid.body.setCircle(15, 5, 5);
+    // randomly select animation for asteroid spinning
+    if (Math.random() < 0.5) asteroid.animations.play("spin-clock");
+    else asteroid.animations.play("spin-counter");
+    // give asteroid random speed and direction
+    asteroid.body.velocity.x = Math.random() * maxSpeed;
+    if (Math.random() < 0.5) asteroid.body.velocity.x *= -1;
+
+    asteroid.body.velocity.y = Math.random() * maxSpeed;
+    if (Math.random() < 0.5) asteroid.body.velocity.y *= -1;
+  }
+  asteroidGroup.enableBody = true;
+
+  asteroidParticles = game.add.emitter(0, 0, 50);
+  asteroidParticles.makeParticles("particle");
+  asteroidParticles.gravity = 0;
+  asteroidParticles.setAlpha(1, 0, 1000); // fade out after 1000 ms;
+
+  explosion = game.add.sprite(
+    game.world.centerX,
+    game.world.centerY,
+    "explosion"
+  );
+  explosion.animations.add(
+    "explode",
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
+    30,
+    false
+  );
+  explosion.anchor.set(0.5, 0.5);
+  explosion.visible = false; // hide until needed
+  ship.events.onKilled.add(function() {
+    explosion.reset(ship.x, ship.y);
+    explosion.visible = true;
+    explosion.animations.play("explode", 30, false, true);
+  });
+  
+  laser.trackSprite(ship, 0, 0, true);
+
+  arrowKey = game.input.keyboard.createCursorKeys();
+  firekey = game.input.keyboard.addKey(Phaser.KeyCode.SPACEBAR);
+  
+  scoreText = game.add.text(20,20, 'Score: ' + score, { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#ffffff' });
+  healthText = game.add.text(210,20, 'daddy: ', { font: 'Arial', fontSize: '20px', fontStyle: 'bold', fill: '#ffffff' });
+  game.add.image(300, 20, 'health-red');
+   healthBar = game.add.image(300, 20, 'health-green');
+}
+
+// update gameplay - runs in continuous loop after "create" finished
+
+function update() {
+  game.physics.arcade.collide(ship, asteroidGroup, collideAsteroid, null, this);
+  game.physics.arcade.collide(
+    laser.bullets,
+    asteroidGroup,
+    shootAsteroid,
+    null,
+    this
+  );
+  if (firekey.isDown && ship.exists) laser.fire();
+  if (arrowKey.left.isDown) {
+    // rotate player counter-clockwise (negative value)
+    ship.body.angularVelocity = -200;
+  } else if (arrowKey.right.isDown) {
+    // rotate player clockwise (positive value)
+    ship.body.angularVelocity = 200;
+  } else {
+    // stop rotating player
+    ship.body.angularVelocity = 0;
+  }
+
+  if (arrowKey.up.isDown) {
+    // accelerate player forward
+    ship.animations.play("moving");
+    game.physics.arcade.accelerationFromRotation(
+      ship.rotation,
+      200,
+      ship.body.acceleration
+    );
+    engineSound.volume = 1;
+  } else {
+    // stop accelerating player
+    ship.body.acceleration.set(0);
+    ship.animations.stop();
+    ship.frame = 1;
+    engineSound.volume = 0.3;
+  }
+
+  if (firekey.isDown) {
+  }
+
+  // keep player onscreen (instead of collideWorldBounds)
+  // will allow space tilesprite to keep scrolling
+  if (ship.left <= 50) ship.left = 50;
+  else if (ship.right >= game.world.width - 50)
+    ship.right = game.world.width - 50;
+
+  if (ship.top <= 50) ship.top = 50;
+  else if (ship.bottom >= game.world.height - 50)
+    ship.bottom = game.world.height - 50;
+
+  // scroll space tilesprite in opposite direction of player velocity
+  space.tilePosition.x = space.tilePosition.x - ship.body.velocity.x / 40;
+  space.tilePosition.y = space.tilePosition.y - ship.body.velocity.y / 40;
+
+  asteroidGroup.forEach(function(asteroid) {
+    game.world.wrap(asteroid, 20);
+  });
+  // randomly add new asteroid if dead asteroid available
+  if (Math.random() < 0.02) {
+    var asteroid = asteroidGroup.getFirstDead();
+    if (asteroid) {
+      // reset asteroid at random position in game
+      asteroid.reset(game.world.randomX, game.world.randomY);
+      // give asteroid random speed and direction
+      // give asteroid random speed and direction
+      asteroid.body.velocity.x = Math.random() * maxSpeed;
+      if (Math.random() < 0.5) asteroid.body.velocity.x *= -1;
+
+      asteroid.body.velocity.y = Math.random() * maxSpeed;
+      if (Math.random() < 0.5) asteroid.body.velocity.y *= -1;
+      // make asteroid fade into view
+      asteroid.alpha = 0; // start as transparent
+      game.add
+        .tween(asteroid)
+        .to({ alpha: 1 }, 500, Phaser.Easing.Cubic.Out, true);
+    }
+  }
+}
+
+// add custom functions (for collisions, etc.)
+
+function collideAsteroid(ship, asteroid) {
+  asteroidParticles.x = asteroid.x;
+  asteroidParticles.y = asteroid.y;
+  asteroidParticles.explode(1000, 5);
+  asteroid.kill();
+  ship.damage(25);
+  healthBar.scale.setTo(ship.health / ship.maxHealth, 1);
+  game.camera.shake(0.02, 250);
+  boomSound.play();
+}
+
+function shootAsteroid(bullet, asteroid) {
+  score = score + 250;
+  scoreText.text = 'Score: ' + score;
+  asteroidParticles.x = asteroid.x;
+  asteroidParticles.y = asteroid.y;
+  asteroidParticles.explode(1000, 5);
+  asteroid.kill();
+  bullet.kill();
+  game.camera.shake(0.02, 250);
+  boomSound.play();
+  maxSpeed = maxSpeed + 1;
+}
